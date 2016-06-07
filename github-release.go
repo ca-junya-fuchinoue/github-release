@@ -35,12 +35,13 @@ type Options struct {
 		Token      string `goptions:"-s, --security-token, description='Github token (required if $GITHUB_TOKEN not set)'"`
 		User       string `goptions:"-u, --user, description='Github user (required if $GITHUB_USER not set)'"`
 		Repo       string `goptions:"-r, --repo, description='Github repo (required if $GITHUB_REPO not set)'"`
-		Tag        string `goptions:"-t, --tag, obligatory, description='Git tag to create a release from'"`
+		Tag        string `goptions:"-t, --tag, description='Git tag to create a release from'"`
 		Name       string `goptions:"-n, --name, description='Name of the release (defaults to tag)'"`
 		Desc       string `goptions:"-d, --description, description='Description of the release (defaults to tag)'"`
 		Target     string `goptions:"-c, --target, description='Commit SHA or branch to create release of (defaults to the repository default branch)'"`
 		Draft      bool   `goptions:"--draft, description='The release is a draft'"`
 		Prerelease bool   `goptions:"-p, --pre-release, description='The release is a pre-release'"`
+		TagCountUp string `goptions:"-g, --tag-count-up, description='Auto set tag name major => +1.0.0 minor => x.+1.0 => revision => x.x.+1'"`
 	} `goptions:"release"`
 	Edit struct {
 		Token      string `goptions:"-s, --security-token, description='Github token (required if $GITHUB_TOKEN not set)'"`

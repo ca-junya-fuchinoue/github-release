@@ -3,12 +3,14 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 )
 
@@ -261,8 +263,59 @@ func releasecmd(opt Options) error {
 	target := nvls(cmdopt.Target)
 	draft := cmdopt.Draft
 	prerelease := cmdopt.Prerelease
+	tagCountUp := cmdopt.TagCountUp
 
 	vprintln("releasing...")
+
+	if tagCountUp != "" {
+		releases, err := Releases(user, repo, token)
+		if err != nil {
+			return fmt.Errorf("tag info failed. %v", err)
+		}
+
+		reg := regexp.MustCompile(`^([^\d]*)(\d+)\.(\d+)\.(\d+)\z`)
+		var prefix string
+		var ma, mi, re int
+		for _, r := range releases {
+			tn := r.TagName
+			matches := reg.FindStringSubmatch(tn)
+			if len(matches) <= 0 {
+				return fmt.Errorf("unexpected release tag name found. %s", tn)
+			}
+
+			prefix = matches[1]
+
+			a, _ := strconv.Atoi(matches[2])
+			i, _ := strconv.Atoi(matches[3])
+			r, _ := strconv.Atoi(matches[4])
+			if a >= ma {
+				ma = a
+				if i >= mi {
+					mi = i
+					if r > re {
+						re = r
+					}
+				}
+			}
+		}
+
+		switch tagCountUp {
+		case "major":
+			ma++
+			mi = 0
+			re = 0
+		case "minor":
+			mi++
+			re = 0
+		case "revision":
+			re++
+		default:
+			return errors.New("invalid tag-count-up setting. specify [major/minor/revison]")
+		}
+		tag = fmt.Sprintf("%s%d.%d.%d", prefix, ma, mi, re)
+		// TODO: verbose is too noisy.
+		fmt.Println("release ", tag)
+	}
 
 	if err := ValidateCredentials(user, repo, token, tag); err != nil {
 		return err
