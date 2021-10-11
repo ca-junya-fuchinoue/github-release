@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 )
 
 const (
@@ -99,7 +100,23 @@ func DoAuthRequest(method, url, bodyType, token string, headers map[string]strin
 }
 
 func GithubGet(uri string, v interface{}) error {
-	resp, err := http.Get(ApiURL() + uri)
+	args := strings.Split(uri, "?")
+	path := args[0]
+	queries := make(map[string]string)
+	if len(args) > 1 {
+		queryStrings := strings.Split(args[1], "&")
+		for _, queryString := range queryStrings {
+			args2 := strings.Split(queryString, "=")
+			queries[args2[0]] = args2[1]
+		}
+	}
+	req, _ := http.NewRequest("GET", ApiURL()+path, nil)
+	if val, ok := queries["access_token"]; ok {
+		req.Header.Set("Authorization", "token "+val)
+	}
+
+	client := new(http.Client)
+	resp, err := client.Do(req)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
